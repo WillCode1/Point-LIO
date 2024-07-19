@@ -175,7 +175,7 @@ Preprocess::process_cut_frame_pcl2(const sensor_msgs::PointCloud2::ConstPtr &msg
         float yaw_last[MAX_LINE_NUM] = {0.0};  // yaw of last scan point
         float time_last[MAX_LINE_NUM] = {0.0}; // last offset time
 
-        if (pl_orig.points[plsize - 1].time > 0) {
+        if (pl_orig.points[plsize - 1].VEL_TIMESTAMP_FIELD > 0) {
             given_offset_time = true;
         } else {
             cout << "Compute offset time using constant rotation model." << endl;
@@ -192,7 +192,7 @@ Preprocess::process_cut_frame_pcl2(const sensor_msgs::PointCloud2::ConstPtr &msg
             added_pt.y = pl_orig.points[i].y;
             added_pt.z = pl_orig.points[i].z;
             added_pt.intensity = pl_orig.points[i].intensity;
-            added_pt.curvature = pl_orig.points[i].time * 1000.0;  //ms
+            added_pt.curvature = (pl_orig.points[i].VEL_TIMESTAMP_FIELD - pl_orig.points[0].VEL_TIMESTAMP_FIELD) * 1000.0;  //ms
 
             double dist = added_pt.x * added_pt.x + added_pt.y * added_pt.y + added_pt.z * added_pt.z;
             if ( dist < blind * blind || dist > det_range * det_range || isnan(added_pt.x) || isnan(added_pt.y) || isnan(added_pt.z))
@@ -241,7 +241,7 @@ Preprocess::process_cut_frame_pcl2(const sensor_msgs::PointCloud2::ConstPtr &msg
             added_pt.y = pl_orig.points[i].y;
             added_pt.z = pl_orig.points[i].z;
             added_pt.intensity = pl_orig.points[i].intensity;
-            added_pt.curvature = pl_orig.points[i].t / 1e6;  //ns to ms
+            added_pt.curvature = (pl_orig.points[i].t - pl_orig.points[0].t) / 1e6; // ns to ms
 
             double dist = added_pt.x * added_pt.x + added_pt.y * added_pt.y + added_pt.z * added_pt.z;
             if ( dist < blind * blind || dist > det_range * det_range || isnan(added_pt.x) || isnan(added_pt.y) || isnan(added_pt.z))
@@ -391,7 +391,7 @@ void Preprocess::oust64_handler(const sensor_msgs::PointCloud2::ConstPtr &msg)
     added_pt.normal_x = 0;
     added_pt.normal_y = 0;
     added_pt.normal_z = 0;
-    added_pt.curvature = pl_orig.points[i].t * time_unit_scale; // curvature unit: ms
+    added_pt.curvature = (pl_orig.points[i].t - pl_orig.points[0].t) * time_unit_scale; // curvature unit: ms
 
     pl_surf.points.push_back(added_pt);
   }
@@ -420,7 +420,7 @@ void Preprocess::velodyne_handler(const sensor_msgs::PointCloud2::ConstPtr &msg)
     std::vector<float> time_last(N_SCANS, 0.0);  // last offset time
     /*****************************************************************/
 
-    if (pl_orig.points[plsize - 1].time > 0)
+    if (pl_orig.points[plsize - 1].VEL_TIMESTAMP_FIELD > 0)
     {
       given_offset_time = true;
     }
@@ -452,7 +452,7 @@ void Preprocess::velodyne_handler(const sensor_msgs::PointCloud2::ConstPtr &msg)
       added_pt.y = pl_orig.points[i].y;
       added_pt.z = pl_orig.points[i].z;
       added_pt.intensity = pl_orig.points[i].intensity;
-      added_pt.curvature = pl_orig.points[i].time * time_unit_scale;  // curvature unit: ms // cout<<added_pt.curvature<<endl;
+      added_pt.curvature = (pl_orig.points[i].VEL_TIMESTAMP_FIELD - pl_orig.points[0].VEL_TIMESTAMP_FIELD) * time_unit_scale; // curvature unit: ms // cout<<added_pt.curvature<<endl;
       if (i % point_filter_num != 0 || std::isnan(added_pt.x) || std::isnan(added_pt.y) || std::isnan(added_pt.z)) continue;
 
       if (!given_offset_time)
