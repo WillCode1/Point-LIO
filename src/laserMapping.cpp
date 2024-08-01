@@ -14,6 +14,11 @@
 // #include <cv_bridge/cv_bridge.h>
 // #include "matplotlibcpp.h"
 // #include <ros/console.h>
+#define PGO
+#ifdef PGO
+#include "backend_optimization/interface_ros1.h"
+#include "backend_optimization/pgo/Backend.hpp"
+#endif
 
 using namespace std;     
 
@@ -313,6 +318,34 @@ void publish_path(const ros::Publisher pubPath)
     }
 }        
 
+#ifdef PGO1
+void state2pose(PointXYZIRPYT &this_pose6d, const state_ikfom &state)
+{
+    // imu pose -> lidar pose
+    QD lidar_rot;
+    V3D lidar_pos;
+    poseTransformFrame(state.rot, state.pos, state.offset_R_L_I, state.offset_T_L_I, lidar_rot, lidar_pos);
+
+    Eigen::Vector3d eulerAngle = EigenMath::Quaternion2RPY(lidar_rot);
+    this_pose6d.x = lidar_pos(0); // x
+    this_pose6d.y = lidar_pos(1); // y
+    this_pose6d.z = lidar_pos(2); // z
+    this_pose6d.roll = eulerAngle(0);  // roll
+    this_pose6d.pitch = eulerAngle(1); // pitch
+    this_pose6d.yaw = eulerAngle(2);   // yaw
+    this_pose6d.time = lidar_end_time;
+}
+
+void pose2state(const PointXYZIRPYT &this_pose6d, state_ikfom &state)
+{
+    // lidar pose -> imu pose
+    V3D lidar_pos = V3D(this_pose6d.x, this_pose6d.y, this_pose6d.z);
+    V3D eulerAngle = V3D(this_pose6d.roll, this_pose6d.pitch, this_pose6d.yaw);
+    QD lidar_rot = EigenMath::RPY2Quaternion(eulerAngle);
+    poseTransformFrame2(lidar_rot, lidar_pos, state.offset_R_L_I, state.offset_T_L_I, state.rot, state.pos);
+}
+#endif
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "laserMapping");
@@ -369,6 +402,9 @@ int main(int argc, char** argv)
     string pos_log_dir = root_dir + "/Log/pos_log.txt";
     fp = fopen(pos_log_dir.c_str(),"w");
     open_file();
+#ifdef PGO
+    init_pgo_system(nh);
+#endif
 
     /*** ROS subscribe initialization ***/
     ros::Subscriber sub_pcl = p_pre->lidar_type == AVIA ? \
@@ -1020,7 +1056,19 @@ int main(int argc, char** argv)
             if (path_en)                         publish_path(pubPath);
             if (scan_pub_en || pcd_save_en)      publish_frame_world(pubLaserCloudFullRes);
             if (scan_pub_en && scan_body_pub_en) publish_frame_body(pubLaserCloudFullRes_body);
-            
+
+#ifdef PGO1
+            PointXYZIRPYT this_pose6d;
+            state2pose(this_pose6d, state_point);
+            PointCloudXYZI::Ptr submap_fix(new PointCloudXYZI());
+            pgo_handle(this_pose6d, feats_undistort, submap_fix);
+            if (submap_fix->size() > 0)
+            {
+                pose2state(this_pose6d, state_point);
+                kf.change_x(state_point);
+                ikdtree.reconstruct(submap_fix->points);
+            }
+#endif
             /*** Debug variables Logging ***/
             if (runtime_pos_log)
             {
