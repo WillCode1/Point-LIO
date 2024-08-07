@@ -39,6 +39,7 @@ bool  flg_reset = false, flg_exit = false;
 
 //surf feature in map
 PointCloudXYZI::Ptr feats_undistort(new PointCloudXYZI());
+PointCloudXYZI::Ptr feats_undistort_real(new PointCloudXYZI());
 PointCloudXYZI::Ptr feats_down_body_space(new PointCloudXYZI());
 PointCloudXYZI::Ptr init_feats_world(new PointCloudXYZI());
 std::deque<PointCloudXYZI::Ptr> depth_feats_world;
@@ -519,6 +520,12 @@ int main(int argc, char** argv)
             /*** downsample the feature points in a scan ***/
             t1 = omp_get_wtime();
             p_imu->Process(Measures, feats_undistort);
+#if 0
+            if (!use_imu_as_input)
+                p_imu->UndistortPcl(kf_output, Q_output, Measures, imu_deque, *feats_undistort_real);
+            else
+                p_imu->UndistortPcl(kf_input, Q_input, Measures, imu_deque, *feats_undistort_real);
+#endif
             if(space_down_sample)
             {
                 downSizeFilterSurf.setInputCloud(feats_undistort);
@@ -1060,13 +1067,18 @@ int main(int argc, char** argv)
             if (scan_pub_en && scan_body_pub_en) publish_frame_body(pubLaserCloudFullRes_body);
 
 #ifdef PGO
+            feats_undistort_real->resize(feats_down_world->size());
+            for (int j = 0; j < feats_down_world->size(); j++)
+            {
+                pointWorldToBody(&feats_down_world->points[j], &feats_undistort_real->points[j]);
+            }
             PointXYZIRPYT this_pose6d;
             if (!use_imu_as_input)
                 state2pose(this_pose6d, kf_output.x_);
             else
                 state2pose(this_pose6d, kf_input.x_);
             PointCloudXYZI::Ptr submap_fix(new PointCloudXYZI());
-            pgo_handle(this_pose6d, feats_undistort, submap_fix);
+            pgo_handle(this_pose6d, feats_undistort_real, submap_fix);
             if (submap_fix->size() > 0)
             {
                 if (!use_imu_as_input)

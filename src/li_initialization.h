@@ -17,7 +17,7 @@ extern int scan_count;
 extern int frame_ct, wait_num;
 extern std::deque<PointCloudXYZI::Ptr>  lidar_buffer;
 extern std::deque<double>               time_buffer;
-extern std::deque<sensor_msgs::Imu::Ptr> imu_deque;
+extern std::deque<sensor_msgs::Imu::ConstPtr> imu_deque;
 extern std::mutex m_time;
 extern bool lidar_pushed, imu_pushed;
 extern double imu_first_time;

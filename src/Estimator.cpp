@@ -400,3 +400,38 @@ void pointBodyToWorld(PointType const * const pi, PointType * const po)
     po->z = p_global(2);
     po->intensity = pi->intensity;
 }
+#if 1
+void pointWorldToBody(PointType const * const pi, PointType * const po)
+{    
+    V3D p_global(pi->x, pi->y, pi->z);
+    
+    V3D p_body;
+	if (extrinsic_est_en)
+	{	
+		if (!use_imu_as_input)
+		{
+			p_body = kf_output.x_.offset_R_L_I.transpose() * (kf_output.x_.rot.transpose() * (p_global - kf_output.x_.pos) - kf_output.x_.offset_T_L_I);
+		}
+		else
+		{
+			p_body = kf_input.x_.offset_R_L_I.transpose() * (kf_input.x_.rot.transpose() * (p_global - kf_input.x_.pos) - kf_input.x_.offset_T_L_I);
+		}
+	}
+	else
+	{
+		if (!use_imu_as_input)
+		{
+			p_body = Lidar_R_wrt_IMU.transpose() * (kf_output.x_.rot.transpose() * (p_global - kf_output.x_.pos) - Lidar_T_wrt_IMU);
+		}
+		else
+		{
+			p_body = Lidar_R_wrt_IMU.transpose() * (kf_input.x_.rot.transpose() * (p_global - kf_input.x_.pos) - Lidar_T_wrt_IMU);
+		}
+	}
+
+    po->x = p_body(0);
+    po->y = p_body(1);
+    po->z = p_body(2);
+    po->intensity = pi->intensity;
+}
+#endif

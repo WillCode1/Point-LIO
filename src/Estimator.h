@@ -58,4 +58,7 @@ void h_model_IMU_output(state_output &s, esekfom::dyn_share_modified<double> &ek
 
 void pointBodyToWorld(PointType const * const pi, PointType * const po);
 
+#if 1
+void pointWorldToBody(PointType const * const pi, PointType * const po);
+#endif
 #endif
