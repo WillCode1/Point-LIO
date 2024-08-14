@@ -14,6 +14,10 @@
 // #include <cv_bridge/cv_bridge.h>
 // #include "matplotlibcpp.h"
 // #include <ros/console.h>
+// #define EVO
+#ifdef EVO
+#include "backend_optimization/utility/evo_tool.h"
+#endif
 #define PGO
 #ifdef PGO
 #include "backend_optimization/interface_ros1.h"
@@ -405,6 +409,10 @@ int main(int argc, char** argv)
     string pos_log_dir = root_dir + "/Log/pos_log.txt";
     fp = fopen(pos_log_dir.c_str(),"w");
     open_file();
+
+#ifdef EVO
+    evo_tool et("/home/will/dataset/Hilti/pose_trajectory.txt");
+#endif
 #ifdef PGO
     init_pgo_system(nh);
 #endif
@@ -1065,6 +1073,13 @@ int main(int argc, char** argv)
             if (path_en)                         publish_path(pubPath);
             if (scan_pub_en || pcd_save_en)      publish_frame_world(pubLaserCloudFullRes);
             if (scan_pub_en && scan_body_pub_en) publish_frame_body(pubLaserCloudFullRes_body);
+
+#ifdef EVO
+            if (!use_imu_as_input)
+                et.save_trajectory(kf_output.x_.pos, kf_output.x_.rot, lidar_end_time);
+            else
+                et.save_trajectory(kf_input.x_.pos, kf_input.x_.rot, lidar_end_time);
+#endif
 
 #ifdef PGO
             feats_undistort_real->resize(feats_down_world->size());
