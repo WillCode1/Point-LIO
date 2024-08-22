@@ -104,6 +104,7 @@ add_executable(pointlio_mapping src/laserMapping.cpp
                 src/li_initialization.cpp src/parameters.cpp src/preprocess.cpp src/Estimator.cpp 
                 src/IMU_Processing.cpp
                 include/backend_optimization/global_localization/scancontext/Scancontext.cpp
+                include/backend_optimization/global_localization/InitCoordinate.cpp
                 include/backend_optimization/interface_ros1.cpp)
 target_link_libraries(pointlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} stdc++fs ${Boost_LIBRARIES} gtsam)
 target_include_directories(pointlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
