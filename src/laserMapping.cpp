@@ -209,7 +209,7 @@ void publish_frame_world(const ros::Publisher & pubLaserCloudFullRes)
 
         static int scan_wait_num = 0;
         scan_wait_num ++;
-        if (pcl_wait_save->size() > 0 && pcd_save_interval > 0  && scan_wait_num >= pcd_save_interval)
+        if (pcl_wait_save->size() > 0 && scan_wait_num >= pcd_save_interval)
         {
             pcd_index ++;
             string all_points_dir(string(string(ROOT_DIR) + "PCD/scans_") + to_string(pcd_index) + string(".pcd"));
