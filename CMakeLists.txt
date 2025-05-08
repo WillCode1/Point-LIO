@@ -71,6 +71,7 @@ find_package(PCL 1.8 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS serialization timer thread chrono)
 find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Pangolin REQUIRED)
 
 message(Eigen: ${EIGEN3_INCLUDE_DIR})
 
@@ -82,6 +83,7 @@ include_directories(
   ${GTSAM_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
   ${PYTHON_INCLUDE_DIRS}
+  ${Pangolin_INCLUDE_DIRS}
   include)
 
 link_directories(
@@ -106,7 +108,7 @@ add_executable(pointlio_mapping src/laserMapping.cpp
                 include/backend_optimization/global_localization/scancontext/Scancontext.cpp
                 include/backend_optimization/global_localization/InitCoordinate.cpp
                 include/backend_optimization/interface_ros1.cpp)
-target_link_libraries(pointlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} stdc++fs ${Boost_LIBRARIES} gtsam)
+target_link_libraries(pointlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} stdc++fs ${Boost_LIBRARIES} gtsam ${Pangolin_LIBRARIES})
 target_include_directories(pointlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
 
 
